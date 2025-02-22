@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from loguru import logger as my_logger
 from matplotlib import pyplot as plt
+from pathlib import Path
 
 def build_model(input_layer:tf.keras.layers):
     x = tf.keras.layers.Conv2D(32, kernel_size = (3, 3), activation = "relu")(input_layer)
@@ -45,9 +46,22 @@ if __name__ == "__main__":
     BATCH_SIZE = 128
     EPOCH = 15
     my_model.compile(loss = "categorical_crossentropy", optimizer = "adam", metrics = ["accuracy"])
+    
+    my_logger.info("Set checkpoint")
+    checkpoint_path = Path(__file__).parent.joinpath("best_model.h5")
+    my_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+                        filepath = checkpoint_path,
+                        monitor = "val_loss",
+                        save_best_only = True,
+                        save_weights_only = False,
+                        verbose = 1
+                    )
 
     my_logger.info("Start training")
-    my_model.fit(train_images_norm, train_labels_one_hot, batch_size = BATCH_SIZE, epochs = EPOCH, validation_split = 0.1, shuffle = True)
+    my_model.fit(train_images_norm, train_labels_one_hot, batch_size = BATCH_SIZE, epochs = EPOCH, validation_split = 0.1, shuffle = True, callbacks = [my_checkpoint])
+
+    my_logger.info("Save final model")
+    my_model.save(checkpoint_path.with_name("final_model.h5"))
 
 
 
